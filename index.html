@@ -59,7 +59,17 @@ function num(input){
   function expression(){let v=product();while(peek()==='+'||peek()==='-'){let op=tokens[pos++].type,r=product();v=op==='+'?v+r:v-r}return v}
   try{let v=expression();return pos===tokens.length&&Number.isFinite(v)?v:NaN}catch{return NaN}
 }
-function qValues(){let angle=pick(choices),fn=pick(['sin','cos','tan','sec','csc','cot']);let base=val(fn==='sec'?'cos':fn==='csc'?'sin':fn==='cot'?'tan':fn,angle.v);let target=(fn==='sec'||fn==='csc'||fn==='cot')?(base===null||Math.abs(base)<1e-8?null:fmt(1/base)):base;return {topic:'Unit Circle & Exact Values',text:`Evaluate ${fn}(${angle.a}). Give an exact value or write undefined.`,target,kind:'number',hint:'Use the reference angle and the signs in the corresponding quadrant.',explain:`${fn}(${angle.a}) = ${exact(target)}. Use the unit circle and reciprocal identities where appropriate.`}}
+function qValues(){
+ let angle=pick(choices),fn=pick(['sin','cos','tan','sec','csc','cot']);
+ let sine=val('sin',angle.v),cosine=val('cos',angle.v),target;
+ if(fn==='sin')target=sine;
+ else if(fn==='cos')target=cosine;
+ else if(fn==='tan')target=Math.abs(cosine)<1e-8?null:fmt(sine/cosine);
+ else if(fn==='sec')target=Math.abs(cosine)<1e-8?null:fmt(1/cosine);
+ else if(fn==='csc')target=Math.abs(sine)<1e-8?null:fmt(1/sine);
+ else target=Math.abs(sine)<1e-8?null:fmt(cosine/sine);
+ return {topic:'Unit Circle & Exact Values',text:`Evaluate ${fn}(${angle.a}). Give an exact value or write undefined.`,target,kind:'number',hint:'Use the reference angle and the signs in the corresponding quadrant.',explain:`${fn}(${angle.a}) = ${exact(target)}. Use the unit circle and reciprocal identities where appropriate.`}
+}
 function qInverse(){let fn=pick(['arcsin','arccos','arctan']);let a=pick(choices);let x=fn==='arcsin'?val('sin',a.v):fn==='arccos'?val('cos',a.v):val('tan',a.v);if(x===null)return qInverse();let target=fn==='arcsin'?Math.asin(x):fn==='arccos'?Math.acos(x):Math.atan(x);return {topic:'Inverse Trigonometric Functions',text:`Evaluate ${fn}(${exact(x)}). Give the principal value in radians.`,target:fmt(target),kind:'number',hint:fn==='arcsin'?'The principal-value range of arcsin is [-pi/2, pi/2].':fn==='arccos'?'The principal-value range of arccos is [0, pi].':'The principal-value range of arctan is (-pi/2, pi/2).',explain:`The principal value is ${exact(target)} radians. Check the restricted range of ${fn}.`}}
 function qEquations(){let fn=pick(['sin','cos','tan']);let a=pick(choices),target=val(fn,a.v);if(target===null)return qEquations();let solutions=choices.filter(z=>{let v=val(fn,z.v);return v!==null&&Math.abs(v-target)<1e-7}).map(z=>z.v);return {topic:'Trigonometric Equations',text:`Solve ${fn}(x) = ${exact(target)} for 0 ≤ x < 2pi. List ALL solutions separated by semicolons.`,target:solutions,kind:'set',hint:'Use the unit circle and check every quadrant in the specified interval.',explain:'Solutions: '+choices.filter(z=>solutions.some(s=>Math.abs(s-z.v)<1e-7)).map(z=>z.a).join('; ')}}
 function qGraphs(){
